@@ -97,7 +97,6 @@ class RavenAuthenticator(Authenticator):
         help = "Description of the webservice to be passed to Raven."
     )
     long_description = Unicode(
-    	default_value = '',
         config = True,
         help = "Long description of the service being provided. Displays on login page."
     )
