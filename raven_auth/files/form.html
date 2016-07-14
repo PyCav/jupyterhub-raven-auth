@@ -1,0 +1,13 @@
+<div class="service-login">
+   {% if login_logo %}
+   <img src="{{login_logo}}">
+   {% end %}
+   {% if long_description %}
+   <p> {{ long_description }} </p>
+   {% end %}
+   <a class='btn btn-jupyter btn-lg' href='{{login_url}}'>
+    Sign in
+    <img src='{{raven_img}}'>
+   </a>
+</div>
+

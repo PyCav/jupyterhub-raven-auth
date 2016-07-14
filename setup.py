@@ -20,6 +20,7 @@ with open(pjoin(here, 'version.py')) as f:
 setup_args = dict(
     name = 'jupyterhub_raven_auth',
     packages = ['raven_auth'],
+    include_package_data= True,
     version = version_ns['__version__']
 )
 

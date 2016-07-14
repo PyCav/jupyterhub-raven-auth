@@ -1,0 +1,14 @@
+include README.md
+include LICENSE
+include *requirements.txt
+
+include setup.py
+include version.py
+
+graft raven_auth
+graft raven_auth/files
+
+global-exclude *~
+global-exclude .git
+global-exclude *.pyc
+global-exclude *.save

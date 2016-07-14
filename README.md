@@ -1,7 +1,8 @@
 # jupyterhub-raven-auth
 
 jupyterhub authenticator for the University of Cambridge Raven service.
-Written by and for the pyCav Project [2016](http://www.theglobeandmail.com/video/article27108276.ece/ALTERNATES/w620/Video:+Justin+Trudeau+introduces+cabinet+he+says+'looks+like+Canada').
+
+Written by and for the pyCav Project (Cavendish Laboratory) [2016](http://www.theglobeandmail.com/video/article27108276.ece/ALTERNATES/w620/Video:+Justin+Trudeau+introduces+cabinet+he+says+'looks+like+Canada').
 
 
 ## TODO
@@ -9,6 +10,7 @@ Written by and for the pyCav Project [2016](http://www.theglobeandmail.com/video
 ### Main
 * logout behaviour
 * access rights lookup (admins/users)
+* documentation
 
 ### Not so main
 
