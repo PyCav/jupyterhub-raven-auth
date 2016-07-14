@@ -8,7 +8,7 @@ Written by and for the pyCav Project (Cavendish Laboratory) [2016](http://www.th
 ## TODO
 
 ### Main
-* logout behaviour
+* finish customisable login screen
 * access rights lookup (admins/users)
 * documentation
 
@@ -29,3 +29,6 @@ Configure by adding:
 
 > c.RavenAuthenticator.description = "pyCav"
 
+> c.RavenAuthenticator.long_description = "Welcome to the pyCav Jupyterhub server."
+
+> c.RavenAuthenticator.login_logo = '/absolute/path/to/logo/file'

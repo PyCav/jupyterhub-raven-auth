@@ -12,12 +12,13 @@ import raven
 # Accessing bundled data files
 import pkg_resources
 
+# For custom logo
+import os
 
 class CustomLoginHandler(BaseHandler):
     """Render the login page."""
 
     def _render(self, login_error=None, username=None):
-        self.log.info("blah")
         return self.render_template('login.html',
                 next='',
                 username=username,
@@ -101,9 +102,8 @@ class RavenAuthenticator(Authenticator):
         help = "Long description of the service being provided. Displays on login page."
     )
     login_logo = Unicode(
-    	default_value = '',
         config = True,
-        help = "Absolute path to the logo displayed on the login page."
+        help = "Absolute path to the logo file displayed on the login page."
     )
 
     # Customise the Login screen
@@ -112,7 +112,7 @@ class RavenAuthenticator(Authenticator):
     def custom_login_html(self, login_url):
         raven_img_path = pkg_resources.resource_filename(__name__, 'files/ravensmall.png')
         loader = template.Loader(self.files_dir)
-        html = loader.load('form.html').generate(login_logo=self.login_logo, 
+        html = loader.load('form.html').generate(login_logo=os.path.basename(self.login_logo), 
             login_url=self.login_url(login_url),   
             login_service=self.login_service,
             long_description=self.long_description, 
@@ -124,6 +124,7 @@ class RavenAuthenticator(Authenticator):
             (r'/raven?', RavenLoginHandler),
             (r'/login', CustomLoginHandler),
             (r'/files/(.*)', web.StaticFileHandler, {'path': self.files_dir}),
+            (r'/logo/(.*)', web.StaticFileHandler, {'path': os.path.dirname(self.login_logo)}),
         ]
 
     @gen.coroutine
