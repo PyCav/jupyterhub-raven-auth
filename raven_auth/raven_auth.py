@@ -10,10 +10,6 @@ import raven
 
 class RavenLoginHandler(BaseHandler):
 
-    """
-    Needs to have the get authenticated user class
-    """
-
     wls = None
 
     @gen.coroutine
@@ -21,12 +17,12 @@ class RavenLoginHandler(BaseHandler):
         # If we have a successful redirect from raven
         self.wls = self.get_argument('WLS-Response', None, False)
         if self.wls:
-            raven_resp = raven.Response(self.wls)
-            if raven_resp.success:
-                crsid = raven_resp.principal
+            crsid = yield self.authenticator.authenticate(self, self.wls)
+            if crsid:
                 user = self.user_from_username(crsid)
                 self.set_login_cookie(user)
-                self.set_secure_cookie(user)
+                #self.set_secure_cookie(user)
+                api_token = user.new_api_token()
                 self.redirect(url_path_join(self.hub.server.base_url, 'home'))
             else:
                 raise web.HTTPError(401)
@@ -35,39 +31,43 @@ class RavenLoginHandler(BaseHandler):
 
     def initiate_raven(self):
         # Set params for url formation
-        url = self.authenticator.url
-        port = self.authenticator.port
+        
+        protocol = self.request.protocol
+        host = self.request.host
+        path = url_path_join(self.hub.server.base_url, 'login')
+        
+        # Description for Raven service
         desc = self.authenticator.description
 
-        # TODO: Utilize jupyterhub config to do this
-        url = url + ":" + port +  url_path_join(self.hub.server.base_url, 'login').__str__()
-        self.log.info('%r', url)
-        self.log.info('Redirecting to Raven URI: %r', url)
-        raven_uri = raven.Request(url=url, desc=desc).__str__()
+        uri = '{proto}://{host}{path}'.format(
+            proto=protocol,
+        	host=host,
+        	path=path)
+
+        self.log.info('Redirecting to Raven URI: %r', uri)
+        raven_uri = raven.Request(url=uri, desc=desc).__str__()
 
         self.redirect(raven_uri, status=302)
 
 class RavenAuthenticator(Authenticator):
 
-    # Config. Fields
-    url = Unicode(
-        config = True,
-        help = "Base url for jupyterhub"
-    )
-    port = Unicode(
-        config = True,
-        help = "Port which Jupyterhub is listening on."
-    )
     description = Unicode(
+    	default_value = "A JupyterHub Installation",
         config = True,
-        help = "Description of the webservice being accessed."
+        help = "Description of the webservice to be passed to Raven."
     )
 
     def get_handlers(self, app):
         return [
-            (r'/login?', RavenLoginHandler)
+            (r'/login?', RavenLoginHandler),
+            #TODO: (r'/logout', RavenLogoutHandler),
         ]
 
     @gen.coroutine
     def authenticate(self, handler, data=None):
-        raise NotImplementedError()
+        raven_resp = raven.Response(data)
+        if raven_resp.success:
+            crsid = raven_resp.principal
+            return crsid
+        else:
+        	return None
