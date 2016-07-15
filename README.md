@@ -28,6 +28,8 @@ Configure by adding:
 
 > c = get_config()
 
+> from raven_auth.raven_auth import RavenAuthenticator
+
 > c.JupyterHub.authenticator_class = RavenAuthenticator
 
 > c.RavenAuthenticator.description = "pyCav"
