@@ -115,7 +115,7 @@ class RavenAuthenticator(Authenticator):
             login_url=self.login_url(login_url),   
             login_service=self.login_service,
             long_description=self.long_description, 
-            raven_img='files/ravensmall.png')
+            raven_img='files/raven.png')
         return Markup(html.decode("utf-8"))
 
     def get_handlers(self, app):

@@ -1,23 +1,26 @@
 # jupyterhub-raven-auth
 
 jupyterhub authenticator for the University of Cambridge Raven service.
-
 Written by and for the pyCav Project (Cavendish Laboratory) [2016](http://www.theglobeandmail.com/video/article27108276.ece/ALTERNATES/w620/Video:+Justin+Trudeau+introduces+cabinet+he+says+'looks+like+Canada').
 
+## Features
+* Installs as a plugin, little configuration required
+* Customisable login page (with a logo & long description of the service)
 
 ## TODO
 
 ### Main
-* finish customisable login screen
-* access rights lookup (admins/users)
-* documentation
+* LDAP/College lookup
+* Documentation
+* General Code Tidying
 
 ### Not so main
+* access rights lookup (admins/users) (Technically not the purvue of this plugin)
 
 ## Installation
 
-Clone this git repository into a directory.
 Install using pip3.
+> pip3 install git+git://github.com/PyCav/jupyterhub-raven-auth.git
 
 ## Configuration
 
