@@ -3,7 +3,7 @@ from tornado import gen, web, template
 from jupyterhub.handlers import BaseHandler
 from jupyterhub.auth import Authenticator
 from jupyterhub.utils import url_path_join
-from traitlets import Unicode
+from traitlets import Bool, Unicode, Set
 from jinja2 import Markup
 
 # University of Cambridge Webauth
@@ -12,12 +12,16 @@ import raven
 # Accessing bundled data files
 import pkg_resources
 
-# For custom logo
+# Access absolute paths for custom images
 import os
+
+# Ibis - College lookup
+import ibisclient
 
 class CustomLoginHandler(BaseHandler):
     """Render the login page."""
-
+    # TODO: Think about moving the custom_html method here
+    # Almost carbon copy of the JupyterHub _render method, although override with custom authenticator.
     def _render(self, login_error=None, username=None):
         return self.render_template('login.html',
                 next='',
@@ -38,7 +42,7 @@ class CustomLoginHandler(BaseHandler):
 
 class RavenLoginHandler(BaseHandler):
 
-    # Upon redirect back to login, Raven will supply get information. Store it here.
+    # Once redirected back to the login, Raven will supply a key in the WLS-Response GET argument.
     wls = None
 
     @gen.coroutine
@@ -48,11 +52,10 @@ class RavenLoginHandler(BaseHandler):
         self.wls = self.get_argument('WLS-Response', None, False)
         if self.wls:
             crsid = yield self.authenticator.authenticate(self, self.wls)
-            if crsid:
+            if crsid and self.authenticator.check_cam_whitelist(crsid):
 
                 user = self.user_from_username(crsid)
                 self.set_login_cookie(user)
-
                 self.redirect(url_path_join(self.hub.server.base_url, 'home'))
             else:
                 raise web.HTTPError(401)
@@ -61,13 +64,13 @@ class RavenLoginHandler(BaseHandler):
            self.initiate_raven()
 
     def initiate_raven(self):
-        # Supply Raven with the information required for a redirect back to the jupyterhub server.
-        
+        # Supply Raven with the information required for a redirect back to the JupyterHub server.
+
         protocol = self.request.protocol
         host = self.request.host
         path = url_path_join(self.hub.server.base_url, 'raven')
-        
-        # Description for Raven service
+
+        # Description sent to Raven service
         desc = self.authenticator.description
 
         uri = '{proto}://{host}{path}'.format(
@@ -82,9 +85,9 @@ class RavenLoginHandler(BaseHandler):
 
 class RavenAuthenticator(Authenticator):
 
-    # Override the default JupyterHub login...
+    # Overrides the default JupyterHub login...
     login_service = 'Raven'
-    
+
     # Redirect to raven
     def login_url(self, base_url):
         return url_path_join(base_url, 'raven')
@@ -104,20 +107,60 @@ class RavenAuthenticator(Authenticator):
         config = True,
         help = "Absolute path to the logo file displayed on the login page."
     )
+    inside_cudn = Bool(
+        default_value = False,
+        config = True,
+        help = "Toggle to let the authenticator know that you are inside the CUDN, such that you can access the Lookup service."
+    )
+    allowed_colleges = Set(
+        config = True,
+        help = "(Not implemented yet)."
+    )
+
+    # University Lookup service
+    # Your server must be within the CUDN to utilise this.
+    def check_cam_whitelist(self, crsid):
+        if self.inside_cudn:
+            if not self.allowed_colleges:
+                return True
+            else:
+                ibis_conn = ibisclient.createConnection()
+                try:
+                    ibis_person_method = ibisclient.methods.PersonMethods(ibis_conn)
+                    ibis_person = ibis_person_method.getPerson("crsid", crsid, "jdCollege,all_insts")
+
+                    ibis_person_insts = []
+                    for attr in ibis_person.attributes:
+                        if attr.scheme == 'jdCollege':
+                        ibis_person_insts.append(attr.value)
+                    for inst in ibis_person.institutions:
+                        ibis_person_insts.append(inst.instid)
+                    # Some people belong to multiple institutions, check if any of those are in the allowed college list, if at least one is satisfied, then grant access.
+                    if len(college for college in ibis_person_college if college in self.allowed_colleges) > 0:
+                        return True
+                except ibisclient.IbisException as e:
+                    if e.get_error().status is 403:
+                        self.log.info("IbisException: Status Error: %r, are you inside the CUDN?", e.get_error().status)
+            return False
+        else:
+            return True
 
     # Customise the Login screen
     raven_img_path = pkg_resources.resource_filename(__name__, 'files/ravensmall.png')
     files_dir = pkg_resources.resource_filename(__name__, 'files/')
+
     def custom_login_html(self, login_url):
         raven_img_path = pkg_resources.resource_filename(__name__, 'files/ravensmall.png')
         loader = template.Loader(self.files_dir)
-        html = loader.load('form.html').generate(login_logo=os.path.basename(self.login_logo), 
-            login_url=self.login_url(login_url),   
+        html = loader.load('form.html').generate(login_logo=os.path.basename(self.login_logo),
+            login_url=self.login_url(login_url),
             login_service=self.login_service,
-            long_description=self.long_description, 
+            long_description=self.long_description,
             raven_img='files/raven.png')
         return Markup(html.decode("utf-8"))
 
+
+    # Standard JupyterHub Authenticator class methods
     def get_handlers(self, app):
         return [
             (r'/raven?', RavenLoginHandler),

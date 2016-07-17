@@ -1,4 +1,5 @@
 include README.md
+include INSTS.md
 include LICENSE
 include *requirements.txt
 
@@ -7,6 +8,7 @@ include version.py
 
 graft raven_auth
 graft raven_auth/files
+graft ibisclient
 
 global-exclude *~
 global-exclude .git
