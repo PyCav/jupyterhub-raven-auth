@@ -132,7 +132,7 @@ class RavenAuthenticator(Authenticator):
                     ibis_person_insts = []
                     for attr in ibis_person.attributes:
                         if attr.scheme == 'jdCollege':
-                        ibis_person_insts.append(attr.value)
+                            ibis_person_insts.append(attr.value)
                     for inst in ibis_person.institutions:
                         ibis_person_insts.append(inst.instid)
                     # Some people belong to multiple institutions, check if any of those are in the allowed college list, if at least one is satisfied, then grant access.
