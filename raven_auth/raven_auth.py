@@ -52,7 +52,7 @@ class RavenLoginHandler(BaseHandler):
         self.wls = self.get_argument('WLS-Response', None, False)
         if self.wls:
             crsid = yield self.authenticator.authenticate(self, self.wls)
-            if crsid and self.authenticator.check_cam_whitelist(crsid):
+            if crsid and (self.authenticator.check_whitelist(crsid) or self.authenticator.check_cam_whitelist(crsid)):
 
                 user = self.user_from_username(crsid)
                 self.set_login_cookie(user)
