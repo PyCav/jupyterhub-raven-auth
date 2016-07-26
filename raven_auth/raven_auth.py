@@ -20,20 +20,31 @@ import ibisclient
 
 class CustomLoginHandler(BaseHandler):
     """Render the login page."""
+
+    next = None
+
     # TODO: Think about moving the custom_html method here
     # Almost carbon copy of the JupyterHub _render method, although override with custom authenticator.
-    def _render(self, login_error=None, username=None):
+    def _render(self, login_error=None, username=None, url=None, next=''):
+        self.log.info("login url : %r", next)
         return self.render_template('login.html',
-                next='',
                 username=username,
                 login_error=login_error,
-                custom_html=self.authenticator.custom_login_html(self.hub.server.base_url),
-                login_url=self.settings['login_url'],
+                custom_html=self.authenticator.custom_login_html(self.hub.server.base_url, next),
+                login_url=url,
         )
 
     def get(self):
+        self.next = self.get_argument('next', None, False)
         self.statsd.incr('login.request')
-        self.finish(self._render(username=None))
+        login_url = self.settings['login_url']
+        self.log.info("next: %r", self.next)
+        if self.next:
+            self.next = "?next=" + self.next
+        else:
+            self.next = ''
+
+        self.finish(self._render(username=None, url=login_url, next=self.next))
 
     @gen.coroutine
     def post(self):
@@ -44,26 +55,30 @@ class RavenLoginHandler(BaseHandler):
 
     # Once redirected back to the login, Raven will supply a key in the WLS-Response GET argument.
     wls = None
+    next = None
 
     @gen.coroutine
     def get(self):
 
         # If there is a successful response from Raven, expect this to be populated.
         self.wls = self.get_argument('WLS-Response', None, False)
+        self.next = self.get_argument('next', None, False)
+        self.log.info("next test: %r", self.next)
         if self.wls:
             crsid = yield self.authenticator.authenticate(self, self.wls)
             if crsid and (self.authenticator.check_whitelist(crsid) or self.authenticator.check_cam_whitelist(crsid)):
 
                 user = self.user_from_username(crsid)
                 self.set_login_cookie(user)
-                self.redirect(url_path_join(self.hub.server.base_url, 'home'))
+                redirect = self.next if self.next else url_path_join(self.hub.server.base_url, 'home')
+                self.redirect(redirect)
             else:
                 raise web.HTTPError(401)
         else:
-           # If there is no GET information, send them to login via Raven.
-           self.initiate_raven()
+           # If there is no WLS-Response in the GET information, send them to login via Raven
+           self.initiate_raven(self.next)
 
-    def initiate_raven(self):
+    def initiate_raven(self, next_arg):
         # Supply Raven with the information required for a redirect back to the JupyterHub server.
 
         protocol = self.request.protocol
@@ -77,6 +92,9 @@ class RavenLoginHandler(BaseHandler):
             proto=protocol,
         	host=host,
         	path=path)
+        self.log.info("next test: %r", next_arg)
+        if next_arg:
+            uri = uri + "?next=" + next_arg
 
         self.log.info('Redirecting to Raven URI: %r', uri)
         raven_uri = raven.Request(url=uri, desc=desc).__str__()
@@ -114,7 +132,7 @@ class RavenAuthenticator(Authenticator):
     )
     allowed_colleges = Set(
         config = True,
-        help = "(Not implemented yet)."
+        help = "A set of allowed colleges or institutions to whitelist by."
     )
 
     # University Lookup service
@@ -149,13 +167,14 @@ class RavenAuthenticator(Authenticator):
     raven_img_path = pkg_resources.resource_filename(__name__, 'files/ravensmall.png')
     files_dir = pkg_resources.resource_filename(__name__, 'files/')
 
-    def custom_login_html(self, login_url):
+    def custom_login_html(self, login_url, next):
         raven_img_path = pkg_resources.resource_filename(__name__, 'files/ravensmall.png')
         loader = template.Loader(self.files_dir)
         html = loader.load('form.html').generate(login_logo=os.path.basename(self.login_logo),
             login_url=self.login_url(login_url),
             login_service=self.login_service,
             long_description=self.long_description,
+            next=next,
             raven_img='files/raven.png')
         return Markup(html.decode("utf-8"))
 
@@ -164,7 +183,7 @@ class RavenAuthenticator(Authenticator):
     def get_handlers(self, app):
         return [
             (r'/raven?', RavenLoginHandler),
-            (r'/login', CustomLoginHandler),
+            (r'/login?', CustomLoginHandler),
             (r'/files/(.*)', web.StaticFileHandler, {'path': self.files_dir}),
             (r'/logo/(.*)', web.StaticFileHandler, {'path': os.path.dirname(self.login_logo)}),
         ]

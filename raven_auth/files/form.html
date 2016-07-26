@@ -6,13 +6,11 @@
    {% if long_description %}
    <p> {{ long_description }} </p>
    {% end %}
-
-       <a class='btn btn-jupyter btn-lg' href='{{login_url}}'>
+       <a class='btn btn-jupyter btn-lg' href='{{login_url}}{{next}}'>
            Sign in
            <p>
                <img src='{{raven_img}}'>
            </p>
        </a>
-   
 </div>
 
