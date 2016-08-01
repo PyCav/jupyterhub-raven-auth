@@ -81,7 +81,7 @@ class RavenLoginHandler(BaseHandler):
     def initiate_raven(self, next_arg):
         # Supply Raven with the information required for a redirect back to the JupyterHub server.
 
-        protocol = self.request.protocol
+        protocol = 'https' if self.authenticator.ssl else 'http'
         host = self.request.host
         path = url_path_join(self.hub.server.base_url, 'raven')
 
@@ -92,7 +92,7 @@ class RavenLoginHandler(BaseHandler):
             proto=protocol,
         	host=host,
         	path=path)
-        self.log.info("next test: %r", next_arg)
+
         if next_arg:
             uri = uri + "?next=" + next_arg
 
@@ -133,6 +133,11 @@ class RavenAuthenticator(Authenticator):
     allowed_colleges = Set(
         config = True,
         help = "A set of allowed colleges or institutions to whitelist by."
+    )
+    ssl = Bool(
+        default_value = False,
+        config = True,
+        help = "SSL Configuration - used to correct the redirects (given that Tornado seems to be getting some of them wrong)."
     )
 
     # University Lookup service
