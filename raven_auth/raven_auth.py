@@ -1,31 +1,38 @@
-# Jupyter
+"""
+raven_auth.py
+
+Imports
+
+tornado: for handling any asynchronus requests, as well as generating the HTML templates.
+jupyterhub: Authenticator class as required. The BaseHandler is customised to create a custom login screen.
+jinja2: Markup imported to make any custom html safe (thereby allowing a browser to render it).
+raven: for producing and verifying University of Cambridge webauth requests.
+ibisclient: for University of Cambridge lookup requests (to find what institution a person belongs to.
+os: accessing/creating absolute filepaths for custom images
+pkg_resources: for generating an absolute filepath to the raven images bundled with the plugin.
+
+"""
 from tornado import gen, web, template
 from jupyterhub.handlers import BaseHandler
 from jupyterhub.auth import Authenticator
 from jupyterhub.utils import url_path_join
 from traitlets import Bool, Unicode, Set
 from jinja2 import Markup
-
-# University of Cambridge Webauth
-import raven
-
-# Accessing bundled data files
-import pkg_resources
-
-# Access absolute paths for custom images
-import os
-
-# Ibis - College lookup
-import ibisclient
+import raven, ibisclient
+import os, pkg_resources
 
 class CustomLoginHandler(BaseHandler):
-    """Render the login page."""
+    """
+    Class which renders the login page.
+    If a GET request using the variable 'next' is given, a redirect will occur after raven authentication.
+    """
 
     next = None
 
-    # TODO: Think about moving the custom_html method here
-    # Almost carbon copy of the JupyterHub _render method, although override with custom authenticator.
     def _render(self, login_error=None, username=None, url=None, next=''):
+        """
+        Almost carbon copy of the JupyterHub _render method, although override with custom authenticator.
+        """
         self.log.info("login url : %r", next)
         return self.render_template('login.html',
                 username=username,
@@ -48,12 +55,18 @@ class CustomLoginHandler(BaseHandler):
 
     @gen.coroutine
     def post(self):
+        """
+        Override the BaseHandler post method.
+        """
         pass
 
-
 class RavenLoginHandler(BaseHandler):
+    """
+    Class to handle the Raven login requests.
+    Upon the first visit, this Handler will create a Raven login request URL and redirect to it.
+    On return (the second visit), it will process the key provided in the GET request variable 'WLS'.
+    """
 
-    # Once redirected back to the login, Raven will supply a key in the WLS-Response GET argument.
     wls = None
     next = None
 
@@ -80,7 +93,6 @@ class RavenLoginHandler(BaseHandler):
 
     def initiate_raven(self, next_arg):
         # Supply Raven with the information required for a redirect back to the JupyterHub server.
-
         protocol = 'https' if self.authenticator.ssl else 'http'
         host = self.request.host
         path = url_path_join(self.hub.server.base_url, 'raven')
@@ -102,7 +114,9 @@ class RavenLoginHandler(BaseHandler):
         self.redirect(raven_uri, status=302)
 
 class RavenAuthenticator(Authenticator):
-
+    """
+    Custom authenticator class 
+    """
     # Overrides the default JupyterHub login...
     login_service = 'Raven'
 
@@ -140,9 +154,12 @@ class RavenAuthenticator(Authenticator):
         help = "SSL Configuration - used to correct the redirects (given that Tornado seems to be getting some of them wrong)."
     )
 
-    # University Lookup service
-    # Your server must be within the CUDN to utilise this.
+    
     def check_cam_whitelist(self, crsid):
+        """
+        Method which whitelists using the University Lookup service
+        Your server must be within the CUDN to utilise this (If you are, activate the Authenticator's inside_cudn configuration.
+        """
         if self.inside_cudn:
             if not self.allowed_colleges:
                 return True
