@@ -19,6 +19,7 @@ with open(pjoin(here, 'version.py')) as f:
 # TODO: this
 setup_args = dict(
     name = 'jupyterhub_raven_auth',
+    url = 'https://github.com/PyCav/jupyterhub-raven-auth',
     packages = ['raven_auth', 'ibisclient'],
     include_package_data= True,
     version = version_ns['__version__']
