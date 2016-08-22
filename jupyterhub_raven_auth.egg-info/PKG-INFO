@@ -1,0 +1,17 @@
+Metadata-Version: 1.1
+Name: jupyterhub-raven-auth
+Version: 0.1.0a0
+Summary: jupyterhub-raven-auth
+Home-page: https://github.com/PyCav/jupyterhub-raven-auth
+Author: pyCav Team 2016
+Author-email:  
+License: BSD
+Description: University of Cambridge raven plugin for JupyterHub
+Keywords: jupyterhub raven cambridge
+Platform: UNKNOWN
+Classifier: Intended Audience :: Education
+Classifier: Topic :: Education
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.3
+Classifier: Programming Language :: Python :: 3.4
+Classifier: Programming Language :: Python :: 3.5

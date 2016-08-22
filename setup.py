@@ -2,11 +2,9 @@
 # coding: utf-8
 
 from __future__ import print_function
+import os, sys
 
-import os
-import sys
-
-from distutils.core import setup
+from setuptools import setup, find_packages, Extension
 
 pjoin = os.path.join
 here = os.path.abspath(os.path.dirname(__file__))
@@ -16,26 +14,33 @@ version_ns = {}
 with open(pjoin(here, 'version.py')) as f:
    exec(f.read(), {}, version_ns)
 
-# TODO: this
-setup_args = dict(
+setup(
     name = 'jupyterhub_raven_auth',
+    version = version_ns['__version__'],
+    
+    description='jupyterhub-raven-auth',
+    long_description='University of Cambridge raven plugin for JupyterHub',
+
+    author='pyCav Team 2016',
+    author_email=' ',
+
+    license='BSD',
+
+    classifiers=[
+        'Intended Audience :: Education',
+        'Topic :: Education',
+
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
+    ],
+
+    keywords='jupyterhub raven cambridge',
+
     url = 'https://github.com/PyCav/jupyterhub-raven-auth',
     packages = ['raven_auth', 'ibisclient'],
-    include_package_data= True,
-    version = version_ns['__version__']
+    
+    install_requires=['jupyterhub',
+    'python-raven'],
 )
-
-if 'setuptools' in sys.modules:
-    setup_args['install_requires'] = install_requires = []
-    with open('requirements.txt') as f:
-        for line in f.readlines():
-            req = line.strip()
-            if not req or req.startswith(('e', '#')):
-                continue
-            install_requires.append(req)
-
-def main():
-    setup(**setup_args)
-
-if __name__ == '__main__':
-    main()
