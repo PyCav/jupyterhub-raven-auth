@@ -11,12 +11,8 @@ Written by and for the pyCav Project (Cavendish Laboratory) [2016](http://www.th
 ## TODO
 
 ### Main
-* Test JupyterHub default whitelisting with the Cambridge lookup whitelist (OR functionality)
-* (On github) Provide a basic list of valid institution names (e.g. PHY, CHRSTPG)
+* Test JupyterHub default whitelisting with the Cambridge lookup whitelist
 * Documentation
-
-### Not so main
-* Tidy up code
 
 ## Installation
 
